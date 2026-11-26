@@ -122,3 +122,62 @@ test("pucker measure = mouth width / face width, independent of distance to came
   assert.ok(Math.abs(near - 0.4) < 1e-9);
   assert.ok(Math.abs(near - far) < 1e-9);
 });
+
+// 張大嘴：上下唇距離 ÷ 臉寬，確認不受鏡頭遠近影響
+test("mouthOpen measure = lip distance / face width, independent of distance to camera", () => {
+  // 建立一張假的臉，scale 越小代表臉離鏡頭越遠
+  const face = (scale) => {
+    const lm = Array.from({ length: 478 }, () => ({ x: 0.5, y: 0.5 }));
+
+    // 臉部左右兩側，作為臉寬的參考
+    lm[LM.faceLeft] = { x: 0.5 - 0.2 * scale, y: 0.5 };
+    lm[LM.faceRight] = { x: 0.5 + 0.2 * scale, y: 0.5 };
+
+    // 上下唇內緣，作為張嘴距離的參考
+    lm[LM.upperLipIn] = { x: 0.5, y: 0.5 - 0.05 * scale };
+    lm[LM.lowerLipIn] = { x: 0.5, y: 0.5 + 0.05 * scale };
+
+    return lm;
+  };
+
+  // 模擬臉靠近鏡頭
+  const near = EXERCISES.mouthOpen.measure(face(1.0), 640, 480);
+
+  // 模擬臉遠離鏡頭，臉部特徵點距離縮小一半
+  const far = EXERCISES.mouthOpen.measure(face(0.5), 640, 480);
+
+  // 確認兩種距離算出的比例相同
+  assert.ok(Math.abs(near - far) < 1e-9);
+});
+
+// 測試張大嘴：臉放大或縮小時，measure() 的結果應該相同
+test("張大嘴的 measure() 不受臉離鏡頭遠近影響", () => {
+  const exercise = EXERCISES.mouthOpen;
+
+  // 建立一張假的臉，使用 MediaPipe 的特徵點編號
+  const face = Array.from({ length: 468 }, () => ({
+    x: 0.5,
+    y: 0.5,
+  }));
+
+  // 臉部左右邊界：234、454
+  face[234] = { x: 0.3, y: 0.5 };
+  face[454] = { x: 0.7, y: 0.5 };
+
+  // 上下唇內緣：13、14
+  face[13] = { x: 0.5, y: 0.45 };
+  face[14] = { x: 0.5, y: 0.50 };
+
+  // 模擬臉靠近鏡頭：以臉中心為基準，所有座標放大 2 倍
+  const biggerFace = face.map((point) => ({
+    x: 0.5 + (point.x - 0.5) * 2,
+    y: 0.5 + (point.y - 0.5) * 2,
+  }));
+
+  // 分別計算原本大小和放大後的臉
+  const normalValue = exercise.measure(face, 640, 480);
+  const biggerValue = exercise.measure(biggerFace, 640, 480);
+
+  // 兩個結果應該相同
+  assert.ok(Math.abs(normalValue - biggerValue) < 0.000001);
+});
