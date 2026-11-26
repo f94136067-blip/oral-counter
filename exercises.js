@@ -64,4 +64,15 @@ export const EXERCISES = Object.freeze({
         height
       ) / faceWidth(lm, width, height),
   }),
+
+    // 新增動作：咧嘴笑
+  smile: Object.freeze({
+    name: "咧嘴笑",
+    hint: "盡量向左右兩側展開嘴角，露出笑容",
+    // 使用 61、291 測量嘴角距離，234、454 測量臉寬
+    points: [LM.mouthLeft, LM.mouthRight, LM.faceLeft, LM.faceRight],
+    // 嘴角距離 ÷ 臉寬，咧嘴笑時數值通常會變大
+    measure: (lm, width, height) =>
+      dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) / faceWidth(lm, width, height),
+  }),
 });
