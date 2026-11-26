@@ -35,7 +35,7 @@ export function faceWidth(lm, width, height) {
 export const EXERCISES = Object.freeze({
   // 原本的嘟嘴動作
   pucker: Object.freeze({
-    name: "嘟嘴",
+    name: "章魚吸盤 (嘟嘴)",
     hint: "嘴唇往前嘟起來，像要親親",
     points: [
       LM.mouthLeft,
@@ -54,7 +54,7 @@ export const EXERCISES = Object.freeze({
 
   // 新增：張大嘴動作
   mouthOpen: Object.freeze({
-    name: "張大嘴",
+    name: "鬚鯨掠食 (張大嘴)",
     hint: "嘴巴盡量張大",
     points: [
       LM.upperLipIn,
