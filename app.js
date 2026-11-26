@@ -38,8 +38,57 @@ function options() {
   return { ...DEFAULTS, holdMs: Number($("holdSel").value) * 1000 };
 }
 
+// 取得目標次數，若輸入不正確就使用預設值 10
+function targetCount() {
+  const value = Number($("targetSel").value);
+
+  if (!Number.isInteger(value) || value < 1 || value > 1000) {
+    return 10;
+  }
+  return value;
+}
+
 function say(text) { $("message").textContent = text; }
 function status(text) { $("status").textContent = text; }
+// 使用者切換動作時，清除舊資料並重新開始
+function changeExercise() {
+  // 取得下拉選單選擇的動作
+  const selected = $("exerciseSel").value;
+  exercise = EXERCISES[selected];
+
+  // 更新畫面上的動作名稱和提示
+  $("exName").textContent = exercise.name;
+  $("exHint").textContent = exercise.hint;
+
+  // 清除舊的校正資料
+  calib = null;
+  samples = { rest: [], max: [] };
+  calibStart = 0;
+
+  // 停止原本的校正或計數流程
+  mode = "idle";
+
+  // 清除舊的計數狀態
+  state = initialState();
+
+  // 清除校正提示
+  $("calibBanner").hidden = true;
+
+  // 尚未重新校正，因此不能使用次數歸零功能
+  $("resetBtn").disabled = true;
+
+  // 更新畫面，讓次數和進度條歸零
+  render();
+
+  // 提醒使用者重新校正
+  if (landmarker) {
+    say("已切換動作，請重新校正！");
+    status("動作已切換，等待重新校正");
+  } else {
+    say("已切換動作，請先開啟相機，再進行校正");
+    status("尚未開啟相機");
+  }
+}
 
 async function loadModel() {
   const files = await FilesetResolver.forVisionTasks(WASM_URL);
@@ -129,11 +178,18 @@ function draw(landmarks) {
 }
 
 function render() {
+  // 顯示目前完成次數
   $("count").textContent = String(state.count);
+
+  // 顯示設定的目標次數
+  $("targetDisplay").textContent = `目標：${targetCount()} 下`;
+
   const pct = Math.max(0, Math.min(1, state.p)) * 100;
   $("barFill").style.width = `${pct}%`;
+
   const hold = options().holdMs / 1000;
   $("hold").textContent = `維持 ${(state.heldMs / 1000).toFixed(1)} / ${hold} 秒`;
+
   say(state.message);
 }
 
@@ -150,9 +206,17 @@ function loop() {
     if (mode === "calibrating") {
       calibrationTick(now, a);
     } else if (mode === "counting") {
-      state = a === null ? faceLost(state) : step(state, a, now, calib, options());
-      render();
-    } else {
+  // 繼續執行原本的計數規則
+  state = a === null ? faceLost(state) : step(state, a, now, calib, options());
+
+  render();
+
+  // 達到目標次數，就停止計數
+  if (state.count >= targetCount()) {
+    mode = "completed";
+    say("完成今天的練習！");
+  }
+} else {
       status(landmarks ? "相機運作中，已偵測到臉" : "偵測不到臉：請正對鏡頭、讓臉部光線充足");
     }
   }
@@ -161,7 +225,38 @@ function loop() {
 
 $("startBtn").addEventListener("click", start);
 $("calibBtn").addEventListener("click", startCalibration);
-$("resetBtn").addEventListener("click", () => { state = initialState(); render(); });
+$("resetBtn").addEventListener("click", () => {
+  state = initialState();
+  render();
+});
+
+// 新增：選擇不同動作時執行切換函式
+$("exerciseSel").addEventListener("change", changeExercise);
+
+// 按下次數歸零後，可以重新開始練習
+$("resetBtn").addEventListener("click", () => {
+  state = initialState();
+
+  // 如果已經校正完成，就恢復計數模式
+  mode = calib ? "counting" : "idle";
+
+  render();
+
+  if (calib) {
+    say("次數已歸零，可以重新開始！");
+  }
+});
+
+// 修改目標次數時，更新畫面
+$("targetSel").addEventListener("change", () => {
+  render();
+
+  // 如果目前次數已經達到新的目標，就直接結束
+  if (mode === "counting" && state.count >= targetCount()) {
+    mode = "completed";
+    say("完成今天的練習！");
+  }
+});
 
 // 切換動作時，清除舊的校正資料並重新開始
 $("exerciseSel").addEventListener("change", (event) => {
