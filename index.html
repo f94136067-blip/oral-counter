@@ -21,6 +21,7 @@
 
     <section class="panel">
       <div class="count"><span id="count">0</span><small>下</small></div>
+      <p id="targetDisplay">目標：10 下</p>
       <div class="bar" aria-label="動作幅度">
         <div id="barFill" class="fill"></div>
         <div class="mark" style="left:75%" title="75% 門檻"></div>
@@ -33,22 +34,29 @@
         <button id="calibBtn" disabled>校正（放鬆 3 秒、盡力 3 秒）</button>
         <button id="resetBtn" disabled>次數歸零</button>
       </div>
-<!-- 動作選擇下拉選單 -->
+
+<!-- 新增：讓使用者選擇要練習的動作 -->
 <label class="setting">選擇動作
   <select id="exerciseSel">
     <option value="pucker">嘟嘴</option>
     <option value="mouthOpen">張大嘴</option>
+    <option value="smile">一笑呷百二（咧嘴笑）</option>
   </select>
 </label>
 
+<!-- 目標次數設定，預設為 10 下 -->
+<label class="setting">目標次數
+  <input id="targetSel" type="number" min="1" max="1000" value="10">
+</label>
+
   <label class="setting">維持秒數
-        <select id="holdSel">
-          <option value="2">2 秒</option>
-          <option value="3" selected>3 秒</option>
-          <option value="5">5 秒</option>
-          <option value="10">10 秒</option>
-        </select>
-      </label>
+    <select id="holdSel">
+      <option value="2">2 秒</option>
+      <option value="3" selected>3 秒</option>
+      <option value="5">5 秒</option>
+      <option value="10">10 秒</option>
+    </select>
+  </label>
       <p id="status" class="status">尚未開啟相機</p>
     </section>
   </main>
