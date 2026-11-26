@@ -8,6 +8,10 @@ export const LM = Object.freeze({
   lowerLipIn: 14,   // 下唇內緣中央
   faceLeft: 234,    // 左臉外緣
   faceRight: 454,   // 右臉外緣
+  cheekLeftLower: 416,  // 左臉頰鼓起
+  noseTip: 1,           // 鼻尖作為臉部中央參考點
+  eyeOuterLeft: 33,     // 左眼外眼角
+  eyeOuterRight: 263,   // 右眼外眼角
 });
 
 // 兩點距離公式（換算成像素）
@@ -74,5 +78,35 @@ export const EXERCISES = Object.freeze({
     // 嘴角距離 ÷ 臉寬，咧嘴笑時數值通常會變大
     measure: (lm, width, height) =>
       dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) / faceWidth(lm, width, height),
+  }),
+
+ // 新增：左臉頰鼓起
+  leftCheek: Object.freeze({
+    name: "左臉頰鼓起",
+    hint: "鼓起左邊臉頰，並用手指輕輕頂住",
+
+    // 顯示左臉頰、鼻尖及兩眼外眼角的偵測點
+    points: [
+      LM.cheekLeftLower,
+      LM.noseTip,
+      LM.eyeOuterRight,
+      LM.eyeOuterLeft
+    ],
+
+    // 左臉頰到鼻尖的距離 ÷ 兩眼外眼角距離
+    // 用比例降低臉部遠近對量測值的影響
+    measure: (lm, width, height) =>
+      dist(
+        lm[LM.cheekLeftLower],
+        lm[LM.noseTip],
+        width,
+        height
+      ) /
+      dist(
+        lm[LM.eyeOuterRight],
+        lm[LM.eyeOuterLeft],
+        width,
+        height
+      ),
   }),
 });
