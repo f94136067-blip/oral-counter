@@ -94,3 +94,33 @@ export function faceLost(state) {
   }
   return Object.freeze({ ...state, message: "偵測不到臉" });
 }
+
+// 測試咧嘴笑：嘴角距離 ÷ 臉寬
+test("smile measure = mouth width / face width, independent of camera distance", () => {
+  // 建立一張假的臉，scale 用來模擬臉部遠近
+  const face = (scale) => {
+    const lm = Array.from(
+      { length: 478 },
+      () => ({ x: 0.5, y: 0.5 })
+    );
+
+    // 臉部左右兩側
+    lm[LM.faceLeft] = { x: 0.5 - 0.2 * scale, y: 0.5 };
+    lm[LM.faceRight] = { x: 0.5 + 0.2 * scale, y: 0.5 };
+
+    // 左右嘴角
+    lm[LM.mouthLeft] = { x: 0.5 - 0.08 * scale, y: 0.6 };
+    lm[LM.mouthRight] = { x: 0.5 + 0.08 * scale, y: 0.6 };
+
+    return lm;
+  };
+
+  const near = EXERCISES.smile.measure(face(1.0), 640, 480);
+  const far = EXERCISES.smile.measure(face(0.5), 640, 480);
+
+  // 嘴角距離 ÷ 臉寬應該等於 0.4
+  assert.ok(Math.abs(near - 0.4) < 1e-9);
+
+  // 臉縮小一半，比例仍然相同
+  assert.ok(Math.abs(near - far) < 1e-9);
+});
