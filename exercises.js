@@ -4,9 +4,6 @@
 // 我們把距離換成像素再相除，所以結果和人離鏡頭多遠無關。
 // 特徵點編號可查官方的 face mesh 對照圖（README 有連結）。
 
-
-// exercises.js — 每個動作「量什麼」
-
 export const LM = Object.freeze({
   mouthLeft: 61,    // 左嘴角
   mouthRight: 291,  // 右嘴角
@@ -24,62 +21,17 @@ export function dist(p, q, width, height) {
 }
 
 export function faceWidth(lm, width, height) {
-  return dist(
-    lm[LM.faceLeft],
-    lm[LM.faceRight],
-    width,
-    height
-  );
+  return dist(lm[LM.faceLeft], lm[LM.faceRight], width, height);
 }
 
+// 新增動作：照著 pucker 的格式再寫一個，放進 EXERCISES 即可。
+// measure() 回傳一個數字 A(t)；數字變大或變小都可以，校正會自己判斷方向。
 export const EXERCISES = Object.freeze({
-  // 原本的嘟嘴動作
   pucker: Object.freeze({
-    name: "章魚吸盤 (嘟嘴)",
+    name: "嘟嘴",
     hint: "嘴唇往前嘟起來，像要親親",
-    points: [
-      LM.mouthLeft,
-      LM.mouthRight,
-      LM.faceLeft,
-      LM.faceRight
-    ],
-    measure: (lm, width, height) =>
-      dist(
-        lm[LM.mouthLeft],
-        lm[LM.mouthRight],
-        width,
-        height
-      ) / faceWidth(lm, width, height),
-  }),
-
-  // 新增：張大嘴動作
-  mouthOpen: Object.freeze({
-    name: "鬚鯨掠食 (張大嘴)",
-    hint: "嘴巴盡量張大",
-    points: [
-      LM.upperLipIn,
-      LM.lowerLipIn,
-      LM.faceLeft,
-      LM.faceRight
-    ],
-    measure: (lm, width, height) =>
-      dist(
-        lm[LM.upperLipIn],  // 上唇內緣（13）
-        lm[LM.lowerLipIn],  // 下唇內緣（14）
-        width,
-        height
-      ) / faceWidth(lm, width, height),
-  }),
-
-  // 新增動作：一笑呷百二（咧嘴笑）
-  smile: Object.freeze({
-    name: "一笑呷百二（咧嘴笑）",
-    hint: "嘴角向左右兩側盡量拉開，露出笑容",
-    // 嘴角兩點 + 臉部左右兩側
     points: [LM.mouthLeft, LM.mouthRight, LM.faceLeft, LM.faceRight],
-    // 嘴角距離除以臉寬，咧嘴笑時數值會變大
     measure: (lm, width, height) =>
-      dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) /
-      faceWidth(lm, width, height),
+      dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) / faceWidth(lm, width, height),
   }),
 });
