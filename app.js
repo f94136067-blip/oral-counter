@@ -14,7 +14,7 @@ const CALIB_STEPS = [
   { until: 10000, collect: "max", text: "盡力做並保持… 3 秒" },
 ];
 
-const exercise = EXERCISES.pucker;
+let exercise = EXERCISES.pucker;
 const $ = (id) => document.getElementById(id);
 const video = $("video");
 const canvas = $("overlay");
@@ -162,3 +162,37 @@ function loop() {
 $("startBtn").addEventListener("click", start);
 $("calibBtn").addEventListener("click", startCalibration);
 $("resetBtn").addEventListener("click", () => { state = initialState(); render(); });
+
+// 切換動作時，清除舊的校正資料並重新開始
+$("exerciseSel").addEventListener("change", (event) => {
+  // 根據下拉選單選擇新的動作
+  exercise = EXERCISES[event.target.value];
+
+  // 更新畫面上的動作名稱與提示
+  $("exName").textContent = exercise.name;
+  $("exHint").textContent = exercise.hint;
+
+  // 清除舊的校正結果與校正樣本
+  calib = null;
+  samples = { rest: [], max: [] };
+
+  // 停止目前的計數或校正流程
+  mode = "idle";
+
+  // 次數歸零，進度重新開始
+  state = initialState();
+  render();
+
+  // 隱藏校正提示，並要求重新校正
+  $("calibBanner").hidden = true;
+  $("resetBtn").disabled = true;
+
+  if (landmarker) {
+    $("calibBtn").disabled = false;
+    say("動作已切換，請重新按「校正」");
+  } else {
+    say("動作已切換，請先開啟相機，再重新校正");
+  }
+
+  status("已切換動作，舊的校正結果已清除");
+});
