@@ -207,32 +207,6 @@ $("resetBtn").addEventListener("click", () => {
 
 // 新增：選擇不同動作時執行切換函式
 $("exerciseSel").addEventListener("change", changeExercise);
-
-// 按下次數歸零後，可以重新開始練習
-$("resetBtn").addEventListener("click", () => {
-  state = initialState();
-
-  // 如果已經校正完成，就恢復計數模式
-  mode = calib ? "counting" : "idle";
-
-  render();
-
-  if (calib) {
-    say("次數已歸零，可以重新開始！");
-  }
-});
-
-// 修改目標次數時，更新畫面
-$("targetSel").addEventListener("change", () => {
-  render();
-
-  // 如果目前次數已經達到新的目標，就直接結束
-  if (mode === "counting" && state.count >= targetCount()) {
-    mode = "completed";
-    say("完成今天的練習！");
-  }
-});
-
 // 切換動作時，清除舊的校正資料並重新開始
 $("exerciseSel").addEventListener("change", (event) => {
   // 根據下拉選單選擇新的動作
