@@ -38,16 +38,6 @@ function options() {
   return { ...DEFAULTS, holdMs: Number($("holdSel").value) * 1000 };
 }
 
-// 取得目標次數，若輸入不正確就使用預設值 10
-function targetCount() {
-  const value = Number($("targetSel").value);
-
-  if (!Number.isInteger(value) || value < 1 || value > 1000) {
-    return 10;
-  }
-  return value;
-}
-
 function say(text) { $("message").textContent = text; }
 function status(text) { $("status").textContent = text; }
 // 使用者切換動作時，清除舊資料並重新開始
@@ -178,18 +168,11 @@ function draw(landmarks) {
 }
 
 function render() {
-  // 顯示目前完成次數
   $("count").textContent = String(state.count);
-
-  // 顯示設定的目標次數
-  $("targetDisplay").textContent = `目標：${targetCount()} 下`;
-
   const pct = Math.max(0, Math.min(1, state.p)) * 100;
   $("barFill").style.width = `${pct}%`;
-
   const hold = options().holdMs / 1000;
   $("hold").textContent = `維持 ${(state.heldMs / 1000).toFixed(1)} / ${hold} 秒`;
-
   say(state.message);
 }
 
@@ -206,16 +189,8 @@ function loop() {
     if (mode === "calibrating") {
       calibrationTick(now, a);
     } else if (mode === "counting") {
-  // 繼續執行原本的計數規則
   state = a === null ? faceLost(state) : step(state, a, now, calib, options());
-
   render();
-
-  // 達到目標次數，就停止計數
-  if (state.count >= targetCount()) {
-    mode = "completed";
-    say("完成今天的練習！");
-  }
 } else {
       status(landmarks ? "相機運作中，已偵測到臉" : "偵測不到臉：請正對鏡頭、讓臉部光線充足");
     }
