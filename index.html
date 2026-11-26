@@ -34,23 +34,22 @@
         <button id="resetBtn" disabled>次數歸零</button>
       </div>
 
-<!-- 新增：讓使用者選擇要練習的動作 -->
-<label class="setting">選擇動作
-  <select id="exerciseSel">
-    <option value="pucker">嘟嘴</option>
-    <option value="mouthOpen">張大嘴</option>
-    <option value="smile">一笑呷百二（咧嘴笑）</option>
-  </select>
-</label>
-
-  <label class="setting">維持秒數
-    <select id="holdSel">
-      <option value="2">2 秒</option>
-      <option value="3" selected>3 秒</option>
-      <option value="5">5 秒</option>
-      <option value="10">10 秒</option>
+    <!-- 動作選擇下拉選單 -->
+  <label class="setting">選擇動作
+    <select id="exerciseSel">
+      <option value="pucker">嘟嘴</option>
+      <option value="mouthOpen">張大嘴</option>
     </select>
   </label>
+
+<label class="setting">維持秒數
+  <select id="holdSel">
+    <option value="2">2 秒</option>
+    <option value="3" selected>3 秒</option>
+    <option value="5">5 秒</option>
+    <option value="10">10 秒</option>
+  </select>
+</label>
       <p id="status" class="status">尚未開啟相機</p>
     </section>
   </main>
