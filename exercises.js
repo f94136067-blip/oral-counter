@@ -81,4 +81,5 @@ export const EXERCISES = Object.freeze({
     measure: (lm, width, height) =>
       dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) /
       faceWidth(lm, width, height),
-});
+}),
+})
