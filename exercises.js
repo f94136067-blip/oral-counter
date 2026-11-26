@@ -70,4 +70,15 @@ export const EXERCISES = Object.freeze({
         height
       ) / faceWidth(lm, width, height),
   }),
+
+  // 新增動作：一笑呷百二（咧嘴笑）
+  smile: Object.freeze({
+    name: "一笑呷百二（咧嘴笑）",
+    hint: "嘴角向左右兩側盡量拉開，露出笑容",
+    // 嘴角兩點 + 臉部左右兩側
+    points: [LM.mouthLeft, LM.mouthRight, LM.faceLeft, LM.faceRight],
+    // 嘴角距離除以臉寬，咧嘴笑時數值會變大
+    measure: (lm, width, height) =>
+      dist(lm[LM.mouthLeft], lm[LM.mouthRight], width, height) /
+      faceWidth(lm, width, height),
 });
