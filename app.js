@@ -189,7 +189,7 @@ function loop() {
     if (mode === "calibrating") {
       calibrationTick(now, a);
     } else if (mode === "counting") {
-  state = a === null ? faceLost(state) : step(state, a, now, calib, options());
+      state = a === null ? faceLost(state) : step(state, a, now, calib, options());
   render();
 } else {
       status(landmarks ? "相機運作中，已偵測到臉" : "偵測不到臉：請正對鏡頭、讓臉部光線充足");
@@ -200,13 +200,8 @@ function loop() {
 
 $("startBtn").addEventListener("click", start);
 $("calibBtn").addEventListener("click", startCalibration);
-$("resetBtn").addEventListener("click", () => {
-  state = initialState();
-  render();
-});
+$("resetBtn").addEventListener("click", () => { state = initialState(); render(); });
 
-// 新增：選擇不同動作時執行切換函式
-$("exerciseSel").addEventListener("change", changeExercise);
 // 切換動作時，清除舊的校正資料並重新開始
 $("exerciseSel").addEventListener("change", (event) => {
   // 根據下拉選單選擇新的動作
