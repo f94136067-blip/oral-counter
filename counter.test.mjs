@@ -122,3 +122,30 @@ test("pucker measure = mouth width / face width, independent of distance to came
   assert.ok(Math.abs(near - 0.4) < 1e-9);
   assert.ok(Math.abs(near - far) < 1e-9);
 });
+
+// 張大嘴：上下唇距離 ÷ 臉寬，確認不受鏡頭遠近影響
+test("mouthOpen measure = lip distance / face width, independent of distance to camera", () => {
+  // 建立一張假的臉，scale 越小代表臉離鏡頭越遠
+  const face = (scale) => {
+    const lm = Array.from({ length: 478 }, () => ({ x: 0.5, y: 0.5 }));
+
+    // 臉部左右兩側，作為臉寬的參考
+    lm[LM.faceLeft] = { x: 0.5 - 0.2 * scale, y: 0.5 };
+    lm[LM.faceRight] = { x: 0.5 + 0.2 * scale, y: 0.5 };
+
+    // 上下唇內緣，作為張嘴距離的參考
+    lm[LM.upperLipIn] = { x: 0.5, y: 0.5 - 0.05 * scale };
+    lm[LM.lowerLipIn] = { x: 0.5, y: 0.5 + 0.05 * scale };
+
+    return lm;
+  };
+
+  // 模擬臉靠近鏡頭
+  const near = EXERCISES.mouthOpen.measure(face(1.0), 640, 480);
+
+  // 模擬臉遠離鏡頭，臉部特徵點距離縮小一半
+  const far = EXERCISES.mouthOpen.measure(face(0.5), 640, 480);
+
+  // 確認兩種距離算出的比例相同
+  assert.ok(Math.abs(near - far) < 1e-9);
+});
