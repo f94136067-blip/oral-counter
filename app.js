@@ -27,6 +27,7 @@ let samples = { rest: [], max: [] };
 let calib = null;
 let state = initialState();
 let lastVideoTime = -1;
+let speechEnabled = false;
 
 // 給自動測試看的資訊（不影響功能）
 window.__oral = { frames: 0, faces: 0, lastA: null, mode: () => mode };
@@ -44,6 +45,43 @@ function options() {
 
 function say(text) { $("message").textContent = text; }
 function status(text) { $("status").textContent = text; }
+
+function toChineseNumber(number) {      // 將數字轉換成中文
+  const chineseNumbers = ["零", "一", "二", "三", "四",
+    "五", "六", "七", "八", "九"];
+
+  if (number < 10) return chineseNumbers[number];
+
+  if (number < 20) {
+    return "十" + (number % 10 === 0 ? "" : chineseNumbers[number % 10]);
+  }
+
+  if (number < 100) {
+    return chineseNumbers[Math.floor(number / 10)] + "十" +
+      (number % 10 === 0 ? "" : chineseNumbers[number % 10]);
+  }
+
+  return String(number);
+}
+
+// 唸出語音提示
+function speakMessage(message) {
+  if (!speechEnabled) return;
+
+  if (!("speechSynthesis" in window)) return;
+
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.lang = "zh-TW";
+  utterance.rate = 0.9;
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+// 唸出目前計數
+function speakCount(count) {
+  speakMessage(toChineseNumber(count));
+}
 
 async function loadModel() {
   const files = await FilesetResolver.forVisionTasks(WASM_URL);
@@ -153,8 +191,38 @@ function loop() {
 
     if (mode === "calibrating") {
       calibrationTick(now, a);
-    } else if (mode === "counting") {
-      state = a === null ? faceLost(state) : step(state, a, now, calib, options());
+   } else if (mode === "counting") {
+
+  // ① 記錄更新前的次數與提示文字
+  const previousCount = state.count;
+  const previousMessage = state.message;
+
+  // ② 更新計數狀態
+  state = a === null
+    ? faceLost(state)
+    : step(state, a, now, calib, options());
+
+  // ③ 只有剛出現「再撐久一點」時才唸出提示
+  if (
+    state.message === "再撐久一點" &&
+    previousMessage !== "再撐久一點"
+  ) {
+    speakMessage(state.message);
+  }
+
+  // ④ 只有計數增加時，才唸出中文次數
+  if (state.count > previousCount) {
+    speakCount(state.count);
+  }
+
+  // ⑤ 達到目標次數後，停止計數
+  if (state.count >= options().targetCount) {
+    mode = "completed";
+    state = Object.freeze({
+      ...state,
+      message: "完成今天的練習！",
+    });
+  }
 
       // 達到目標次數後，切換成完成狀態，停止繼續計數
       if (state.count >= options().targetCount) {
@@ -219,4 +287,18 @@ $("exerciseSel").addEventListener("change", (event) => {
   }
 
   status("已切換動作，舊的校正結果已清除");
+});
+
+// 點擊按鈕切換語音開關
+$("speechBtn").addEventListener("click", () => {
+  speechEnabled = !speechEnabled;
+
+  $("speechBtn").textContent = speechEnabled
+    ? "語音：開"
+    : "語音：關";
+
+  // 關閉語音時，停止尚未唸完的語音
+  if (!speechEnabled) {
+    window.speechSynthesis.cancel();
+  }
 });
