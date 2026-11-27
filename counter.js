@@ -13,6 +13,7 @@ export const DEFAULTS = Object.freeze({
   offAt: 0.60,     // 離開「到位」的門檻（比 onAt 低 = 遲滯，防止抖動）
   releaseAt: 0.30, // 做完一下後，要放鬆到這裡以下才算準備好下一下
   holdMs: 3000,    // 要維持多久（毫秒）
+  targetCount: 10, // 預設目標次數為 10 下
   smoothing: 0.5,  // 平滑係數：0 = 不更新，1 = 不平滑
   minRange: 0.02,  // 校正時「放鬆」與「盡力」至少要差這麼多
 });
@@ -58,6 +59,11 @@ export function initialState() {
 
 // 每一幀呼叫一次：a = 這一幀的動作量，t = 時間（毫秒）
 export function step(state, a, t, calib, opts = DEFAULTS) {
+    // 已達目標時直接維持完成狀態，不再繼續計數
+  if (state.count >= opts.targetCount) {
+    return Object.freeze({ ...state, message: "完成今天的練習！" });
+  }
+
   const smoothed = state.smoothed === null ? a : opts.smoothing * a + (1 - opts.smoothing) * state.smoothed;
   const p = progress(smoothed, calib);
   const base = { ...state, smoothed, p };
@@ -75,8 +81,22 @@ export function step(state, a, t, calib, opts = DEFAULTS) {
     }
     const heldMs = t - state.holdStart;
     if (heldMs >= opts.holdMs) {
-      return Object.freeze({ ...base, count: state.count + 1, phase: PHASE.RELEASE, holdStart: null, heldMs, message: "完成一下！請放鬆" });
-    }
+  const count = state.count + 1;
+
+  // 最後一下達到目標時，顯示完成訊息
+  const message = count >= opts.targetCount
+    ? "完成今天的練習！"
+    : "完成一下！請放鬆";
+
+  return Object.freeze({
+    ...base,
+    count,
+    phase: PHASE.RELEASE,
+    holdStart: null,
+    heldMs,
+    message
+  });
+}
     return Object.freeze({ ...base, heldMs, message: "很好，撐住！" });
   }
 
