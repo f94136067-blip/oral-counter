@@ -21,7 +21,7 @@ const canvas = $("overlay");
 const ctx = canvas.getContext("2d");
 
 let landmarker = null;
-let mode = "idle";        // idle | calibrating | counting
+let mode = "idle";        // idle | calibrating | counting | completed
 let calibStart = 0;
 let samples = { rest: [], max: [] };
 let calib = null;
@@ -35,7 +35,11 @@ $("exName").textContent = exercise.name;
 $("exHint").textContent = exercise.hint;
 
 function options() {
-  return { ...DEFAULTS, holdMs: Number($("holdSel").value) * 1000 };
+  return {
+    ...DEFAULTS,
+    holdMs: Number($("holdSel").value) * 1000,
+    targetCount: Number($("targetSel").value), // 讀取使用者設定的目標次數
+  };
 }
 
 function say(text) { $("message").textContent = text; }
@@ -151,8 +155,18 @@ function loop() {
       calibrationTick(now, a);
     } else if (mode === "counting") {
       state = a === null ? faceLost(state) : step(state, a, now, calib, options());
-      render();
-    } else {
+
+      // 達到目標次數後，切換成完成狀態，停止繼續計數
+      if (state.count >= options().targetCount) {
+        mode = "completed";
+        state = Object.freeze({
+         ...state,
+         message: "完成今天的練習！",
+    });
+  }
+
+  render();
+  } else {
       status(landmarks ? "相機運作中，已偵測到臉" : "偵測不到臉：請正對鏡頭、讓臉部光線充足");
     }
   }
@@ -161,7 +175,17 @@ function loop() {
 
 $("startBtn").addEventListener("click", start);
 $("calibBtn").addEventListener("click", startCalibration);
-$("resetBtn").addEventListener("click", () => { state = initialState(); render(); });
+$("resetBtn").addEventListener("click", () => {
+  // 將次數歸零
+  state = initialState();
+
+  // 如果已經完成校正，歸零後就可以重新練習
+  if (calib) {
+    mode = "counting";
+  }
+
+  render();
+});
 
 // 切換動作時，清除舊的校正資料並重新開始
 $("exerciseSel").addEventListener("change", (event) => {
