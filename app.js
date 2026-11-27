@@ -46,6 +46,113 @@ function options() {
 function say(text) { $("message").textContent = text; }
 function status(text) { $("status").textContent = text; }
 
+// 每日紀錄只保存日期、動作名稱、累計次數
+const DAILY_RECORDS_KEY = "oral-counter-daily-records";
+// 取得本機日期，格式為 YYYY-MM-DD
+function getLocalDateString(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// 讀取已經保存的每日紀錄
+function loadDailyRecords() {
+  try {
+    const saved = localStorage.getItem(DAILY_RECORDS_KEY);
+    if (!saved) return [];
+
+    const records = JSON.parse(saved);
+    if (!Array.isArray(records)) return [];
+
+    return records
+      .filter((item) =>
+        item &&
+        typeof item.date === "string" &&
+        typeof item.exercise === "string" &&
+        Number.isFinite(item.count)
+      )
+      .map((item) => ({
+        date: item.date,
+        exercise: item.exercise,
+        count: item.count,
+      }));
+  } catch (error) {
+    console.warn("讀取每日紀錄失敗：", error);
+    return [];
+  }
+}
+
+// 每完成一下，就把當天該動作的累計次數加一
+function saveDailyCount(exerciseName) {
+  try {
+    const records = loadDailyRecords();
+    const today = getLocalDateString();
+
+    const existing = records.find(
+      (item) => item.date === today && item.exercise === exerciseName
+    );
+
+    if (existing) {
+      existing.count += 1;
+    } else {
+      records.push({
+        date: today,
+        exercise: exerciseName,
+        count: 1,
+      });
+    }
+
+    localStorage.setItem(DAILY_RECORDS_KEY, JSON.stringify(records));
+  } catch (error) {
+    console.warn("保存每日紀錄失敗：", error);
+    status("本機紀錄無法保存，請檢查瀏覽器儲存空間設定");
+  }
+}
+
+// 顯示最近 7 天的練習紀錄
+function renderDailyRecords() {
+  const tableBody = $("dailyRecordsBody");
+  const records = loadDailyRecords();
+
+  const firstDay = new Date();
+  firstDay.setHours(0, 0, 0, 0);
+  firstDay.setDate(firstDay.getDate() - 6);
+
+  const firstDate = getLocalDateString(firstDay);
+  const today = getLocalDateString();
+
+  const recentRecords = records
+    .filter((item) => item.date >= firstDate && item.date <= today)
+    .sort((a, b) =>
+      b.date.localeCompare(a.date) || a.exercise.localeCompare(b.exercise)
+    );
+
+  tableBody.replaceChildren();
+
+  if (recentRecords.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 3;
+    cell.textContent = "最近 7 天還沒有紀錄";
+    row.appendChild(cell);
+    tableBody.appendChild(row);
+    return;
+  }
+
+  for (const item of recentRecords) {
+    const row = document.createElement("tr");
+
+    for (const value of [item.date, item.exercise, `${item.count} 下`]) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    }
+
+    tableBody.appendChild(row);
+  }
+}
+
 function toChineseNumber(number) {      // 將數字轉換成中文
   const chineseNumbers = ["零", "一", "二", "三", "四",
     "五", "六", "七", "八", "九"];
@@ -213,6 +320,9 @@ function loop() {
   // ④ 只有計數增加時，才唸出中文次數
   if (state.count > previousCount) {
     speakCount(state.count);
+    
+    saveDailyCount(exercise.name);   // 計數每增加一下，就保存當天的練習紀錄
+    renderDailyRecords();  // 更新網頁上的紀錄表格
   }
 
   // ⑤ 達到目標次數後，停止計數
@@ -302,3 +412,6 @@ $("speechBtn").addEventListener("click", () => {
     window.speechSynthesis.cancel();
   }
 });
+
+// 網頁開啟時，先顯示已保存的最近 7 天紀錄
+renderDailyRecords();
