@@ -171,19 +171,37 @@ function toChineseNumber(number) {      // 將數字轉換成中文
   return String(number);
 }
 
+
 // 唸出語音提示
 function speakMessage(message) {
   if (!speechEnabled) return;
 
+  // 確認瀏覽器支援語音合成
   if (!("speechSynthesis" in window)) return;
 
   const utterance = new SpeechSynthesisUtterance(message);
+
+  // 設定中文語音
   utterance.lang = "zh-TW";
   utterance.rate = 0.9;
 
-  window.speechSynthesis.cancel();
+  // 取得瀏覽器目前可用的語音
+  const voices = window.speechSynthesis.getVoices();
+
+  // 優先尋找繁體中文語音
+  const chineseVoice = voices.find(
+    (voice) => voice.lang === "zh-TW"
+  );
+
+  // 找到繁體中文語音才指定使用
+  if (chineseVoice) {
+    utterance.voice = chineseVoice;
+  }
+
+  // 直接播放，不在每次播放前取消語音
   window.speechSynthesis.speak(utterance);
 }
+
 
 // 唸出目前計數
 function speakCount(count) {
@@ -399,6 +417,7 @@ $("exerciseSel").addEventListener("change", (event) => {
   status("已切換動作，舊的校正結果已清除");
 });
 
+
 // 點擊按鈕切換語音開關
 $("speechBtn").addEventListener("click", () => {
   speechEnabled = !speechEnabled;
@@ -407,11 +426,22 @@ $("speechBtn").addEventListener("click", () => {
     ? "語音：開"
     : "語音：關";
 
-  // 關閉語音時，停止尚未唸完的語音
-  if (!speechEnabled) {
+  if (speechEnabled) {
+    // 開啟語音時，先初始化瀏覽器的語音引擎
+    window.speechSynthesis.getVoices();
+
+    // 讓瀏覽器在使用者點擊時先執行一次語音
+    const utterance = new SpeechSynthesisUtterance("語音已開啟");
+    utterance.lang = "zh-TW";
+    utterance.volume = 0; // 初始化時不發出聲音
+
+    window.speechSynthesis.speak(utterance);
+  } else {
+    // 關閉語音時，停止尚未唸完的語音
     window.speechSynthesis.cancel();
   }
 });
+
 
 // 網頁開啟時，先顯示已保存的最近 7 天紀錄
 renderDailyRecords();
