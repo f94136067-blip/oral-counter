@@ -228,3 +228,21 @@ test("leftCheek measure is independent of distance to camera", () => {
   assert.ok(Math.abs(near - far) < 1e-9);
 });
 
+
+test("reaching target count shows completion message and stops counting", () => {
+  // 將目標次數設定為 1 下，方便測試
+  const opts = { ...NO_SMOOTH, targetCount: 1 };
+
+  // 模擬完成一次動作
+  const first = run([[0, 500], [0.9, 3200]], PUCKER, opts);
+
+  // 確認次數是 1，並且出現完成訊息
+  assert.equal(first.count, 1);
+  assert.equal(first.message, "完成今天的練習！");
+
+  // 達標後再次輸入動作，確認次數不會繼續增加
+  const next = step(first, level(0.9), 5000, PUCKER, opts);
+
+  assert.equal(next.count, 1);
+  assert.equal(next.message, "完成今天的練習！");
+});
